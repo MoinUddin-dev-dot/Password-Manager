@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer, toast } from "react-toastify";
+import { v4 as uuidv4 } from "uuid";
 
 const Manager = () => {
   const ref = useRef();
@@ -13,8 +14,6 @@ const Manager = () => {
     }
   }, []);
 
-  
-
   const showPassword = () => {
     if (ref.current.src.includes("icons/eyecross.png")) {
       ref.current.src = "icons/eye.png";
@@ -26,10 +25,24 @@ const Manager = () => {
   };
 
   const savePassword = () => {
-    setPasswordArray([...passwordArray, form]);
-    localStorage.setItem("password", JSON.stringify([...passwordArray, form]));
-    console.log([...passwordArray, form]);
-    setform({ site: "", username: "", password: "" });
+    if (form.site.length > 3 && form.username.length > 3 && form.password.length > 3) {
+  
+      setPasswordArray([...passwordArray, { ...form, id: uuidv4() }]);
+      localStorage.setItem("password", JSON.stringify([...passwordArray, form]));
+      console.log([...passwordArray, form]);
+      setform({ site: "", username: "", password: "" });
+    } else {
+      toast("🦄 Please fill all fields", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    }
   };
 
   const handleChange = (e) => {
@@ -37,7 +50,7 @@ const Manager = () => {
   };
 
   const copyText = (text) => {
-    toast('🦄 Copied to clipboard', {
+    toast("🦄 Copied to clipboard", {
       position: "top-right",
       autoClose: 5000,
       hideProgressBar: false,
@@ -46,28 +59,64 @@ const Manager = () => {
       draggable: true,
       progress: undefined,
       theme: "light",
+    });
+    navigator.clipboard.writeText(text);
+  };
+
+  const editPassword = (id) => {
+    setform(passwordArray.filter((item) => item.id === id)[0]);
+    setPasswordArray(passwordArray.filter((item) => item.id !== id));
+    toast("🦄 Please Edit", {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: false,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
+  };
+
+  const deletePassword = (id) => {
+    let c = confirm("Do you really want to delete this item ? ");
+    if (c) {
+      setPasswordArray(passwordArray.filter((item) => item.id !== id));
+      localStorage.setItem(
+        "password",
+        JSON.stringify(passwordArray.filter((item) => item.id !== id))
+      );
+      toast("🦄 Deleted from clipboard", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
       });
-    navigator.clipboard.writeText(text)
-  }
+    }
+  };
 
   return (
     <>
-    <ToastContainer
-position="top-right"
-autoClose={5000}
-hideProgressBar={false}
-newestOnTop={false}
-closeOnClick={false}
-rtl={false}
-pauseOnFocusLoss
-draggable
-pauseOnHover
-theme="light"
-/>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]">
         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-green-400 opacity-20 blur-[100px]"></div>
       </div>
-      <div className="  py-16  mycontainer">
+      <div className="  py-20  mycontainer">
         <h1 className="text-4xl text-center font-bold">
           <span className="text-green-500"> &lt; &nbsp;</span>
           Pass
@@ -87,7 +136,7 @@ theme="light"
             className="rounded-full border border-green-600 w-full p-4 py-1"
             type="text"
           />
-          <div className="flex w-full gap-10">
+          <div className="flex flex-col md:flex-row w-full gap-5 md:gap-10">
             <input
               name="username"
               value={form.username}
@@ -136,9 +185,10 @@ theme="light"
             <table className="table-auto w-full rounded-lg overflow-hidden">
               <thead className="bg-green-800 text-white">
                 <tr>
-                  <th className="py-2">Song</th>
-                  <th className="py-2">Artist</th>
-                  <th className="py-2">Year</th>
+                  <th className="py-2">Site</th>
+                  <th className="py-2">Username</th>
+                  <th className="py-2">Password</th>
+                  <th className="py-2">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-green-100">
@@ -150,29 +200,61 @@ theme="light"
                           <a href={item.site} target="_blank">
                             {item.site}
                           </a>
-                          <div className="cursor-pointer pt-3" onClick={()=>{copyText(item.site)}}>
-                            
-                          <img className="w-5 " src="/copy.png" alt="" />
+                          <div
+                            className="cursor-pointer pt-3"
+                            onClick={() => {
+                              copyText(item.site);
+                            }}
+                          >
+                            <img className="w-5 " src="/copy.png" alt="" />
                           </div>
                         </div>
                       </td>
                       <td className=" py-2 border-2 border-white text-center ">
-                      <div className="copy flex justify-center items-center gap-2">
-                        {item.username}
-                        <div className="cursor-pointer pt-3" onClick={()=>{copyText(item.username)}}>
-                            
+                        <div className="copy flex justify-center items-center gap-2">
+                          {item.username}
+                          <div
+                            className="cursor-pointer pt-3"
+                            onClick={() => {
+                              copyText(item.username);
+                            }}
+                          >
                             <img className="w-5 " src="/copy.png" alt="" />
-                            </div>
-                            </div>
+                          </div>
+                        </div>
                       </td>
                       <td className=" py-2 border-2 border-white text-center ">
-                      <div className="copy flex justify-center items-center gap-2">
-                        {item.password}
-                        <div className="cursor-pointer pt-3" onClick={()=>{copyText(item.password)}}>
-                            
+                        <div className="copy flex justify-center items-center gap-2">
+                          {item.password}
+                          <div
+                            className="cursor-pointer pt-3"
+                            onClick={() => {
+                              copyText(item.password);
+                            }}
+                          >
                             <img className="w-5 " src="/copy.png" alt="" />
-                            </div>
-                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className=" py-2 border-2 border-white text-center ">
+                        <div className="flex gap-3 justify-center">
+                          <div
+                            className="cursor-pointer "
+                            onClick={() => {
+                              editPassword(item.id);
+                            }}
+                          >
+                            <img src="./edit.gif" alt="edit" width={25} />
+                          </div>
+                          <div
+                            className="cursor-pointer "
+                            onClick={() => {
+                              deletePassword(item.id);
+                            }}
+                          >
+                            <img src="./delete.gif" alt="delete" width={25} />
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   );

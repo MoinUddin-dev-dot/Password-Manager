@@ -2,6 +2,6 @@
 
 
 .mycontainer {
-    @apply container mx-auto px-4 ;
+    @apply container mx-auto md:px-4 ;
   }
   
